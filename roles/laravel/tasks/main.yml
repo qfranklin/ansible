@@ -1,0 +1,11 @@
+---
+- name: Clone Laravel repository
+  git:
+    repo: 'git@github.com:qfranklin/laravel.git'
+    dest: /var/www/laravel
+    version: main
+
+- name: Install Composer dependencies
+  command: composer install
+  args:
+    chdir: /var/www/laravel

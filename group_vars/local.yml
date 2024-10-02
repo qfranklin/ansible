@@ -1,0 +1,9 @@
+# local.yml
+laravel_env: local
+vue_env: local
+mysql_root_password: root
+
+# dev.yml
+laravel_env: development
+vue_env: production
+mysql_root_password: devpassword
