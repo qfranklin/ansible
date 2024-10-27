@@ -84,7 +84,7 @@
 
               location ~ \.php$ {
                   include snippets/fastcgi-php.conf;
-                  fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                  fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
               }
 
               location ~ /\.ht {
@@ -207,6 +207,22 @@
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
       become: yes
       become_user: qfranklin
+
+    - name: Set ownership for Laravel directories
+      file:
+        path: /var/www/laravel
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Set permissions for storage and bootstrap/cache directories
+      file:
+        path: "{{ item }}"
+        mode: '775'
+        recurse: yes
+      loop:
+        - /var/www/laravel/storage
+        - /var/www/laravel/bootstrap/cache
 
   handlers:
     - name: Generate Laravel app key
