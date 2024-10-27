@@ -3,13 +3,13 @@
   hosts: localhost
   become: yes
 
+  vars_files:
+    - vars.yml
+
   vars:
     nginx_port: 8082
     laravel_directory: /var/www/laravel
     vue_directory: /var/www/vue
-    db_name: laravel_db  # Your database name
-    db_user: laravel_user  # Your database username
-    db_password: secure_password  # Your database password
     ansible_python_interpreter: /usr/bin/python3
 
   tasks:
@@ -154,6 +154,13 @@
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
       become: yes
       become_user: qfranklin
+
+    - name: Set MySQL root password
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        host: localhost
+        state: present
 
     - name: Create MySQL database
       mysql_db:
