@@ -1,7 +1,217 @@
 ---
-- hosts: all
-  become: true
-  roles:
-    - common
-    - laravel
-    - vue
+- name: Setup environment
+  hosts: localhost
+  become: yes
+
+  vars:
+    nginx_port: 8082
+    laravel_directory: /var/www/laravel
+    vue_directory: /var/www/vue
+    db_name: laravel_db  # Your database name
+    db_user: laravel_user  # Your database username
+    db_password: secure_password  # Your database password
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install necessary packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - git
+        - nginx
+        - mysql-server
+        - python3-pip
+        - python3-mysqldb
+        - php
+        - php-cli
+        - php-mbstring
+        - php-xml
+        - php-mysql
+        - php-fpm
+        - php-curl
+        - php-zip
+        - nodejs
+        - curl
+
+    - name: Remove old Node.js version
+      apt:
+        name: nodejs
+        state: absent
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - curl
+          - gnupg
+        state: present
+
+    - name: Add NodeSource APT repository
+      shell: curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+      register: nodesource_setup
+      changed_when: nodesource_setup.rc == 0
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Configure Nginx to listen on port {{ nginx_port }}
+      copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          server {
+              listen {{ nginx_port }} default_server;
+              listen [::]:{{ nginx_port }} default_server;
+              server_name localhost;
+
+              root /var/www/laravel/public;
+              index index.php index.html index.htm;
+
+              location / {
+                  try_files $uri $uri/ /index.php?$query_string;
+              }
+
+              location ~ \.php$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+              }
+
+              location ~ /\.ht {
+                  deny all;
+              }
+          }
+
+    - name: Check Nginx configuration syntax
+      command: nginx -t
+      ignore_errors: yes
+      register: nginx_config_check
+
+    - name: Reload Nginx to apply configuration changes
+      service:
+        name: nginx
+        state: reloaded
+      when: nginx_config_check.rc == 0
+
+    - name: Ensure MySQL service is running
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Install Composer
+      get_url:
+        url: https://getcomposer.org/installer
+        dest: /tmp/composer-installer.php
+        mode: '0755'
+
+    - name: Run Composer Installer
+      command: php /tmp/composer-installer.php --install-dir=/usr/local/bin --filename=composer
+      args:
+        creates: /usr/local/bin/composer
+
+    - name: Clone Laravel repository
+      git:
+        repo: 'git@github.com:qfranklin/laravel.git'
+        dest: "{{ laravel_directory }}"
+        version: main
+      become: yes
+      become_user: qfranklin
+
+    - name: Clone Vue repository
+      git:
+        repo: 'git@github.com:qfranklin/vue.git'
+        dest: "{{ vue_directory }}"
+        version: main
+      become: yes
+      become_user: qfranklin
+
+    - name: Install Laravel dependencies with Composer
+      command: composer install
+      args:
+        chdir: "{{ laravel_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+        COMPOSER_ALLOW_SUPERUSER: "1"
+      become: yes
+      become_user: qfranklin
+
+    - name: Install NPM dependencies for Vue
+      command: npm install
+      args:
+        chdir: "{{ vue_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+      become: yes
+      become_user: qfranklin
+
+    - name: Create MySQL database
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+
+    - name: Create MySQL user with privileges
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        host: "localhost"
+        state: present
+
+    - name: Flush MySQL privileges
+      mysql_user:
+        name: "{{ db_user }}"
+        host: "127.0.0.1"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        state: present
+
+    - name: Configure Laravel .env
+      template:
+        src: env.j2
+        dest: "{{ laravel_directory }}/.env"
+        mode: '0644'
+      notify: Generate Laravel app key
+
+    - name: Generate Laravel app key
+      command: php artisan key:generate
+      args:
+        chdir: "{{ laravel_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+    - name: Run Laravel migrations
+      command: php artisan migrate
+      args:
+        chdir: "{{ laravel_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+      become: yes
+      become_user: qfranklin
+
+    - name: Compile Vue assets
+      command: npm run build
+      args:
+        chdir: "{{ vue_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+      become: yes
+      become_user: qfranklin
+
+  handlers:
+    - name: Generate Laravel app key
+      command: php artisan key:generate
+      args:
+        chdir: "{{ laravel_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
