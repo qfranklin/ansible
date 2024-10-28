@@ -38,6 +38,44 @@
         - nodejs
         - curl
 
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+    - name: Configure Nginx to listen on port {{ nginx_port }}
+      copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          server {
+              listen {{ nginx_port }} default_server;
+              listen [::]:{{ nginx_port }} default_server;
+              server_name localhost;
+              root /var/www/laravel/public;
+              index index.php index.html index.htm;
+              location / {
+                  try_files $uri $uri/ /index.php?$query_string;
+              }
+              location ~ \.php$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+              }
+              location ~ /\.ht {
+                  deny all;
+              }
+          }
+
+    - name: Check Nginx configuration syntax
+      command: nginx -t
+      ignore_errors: yes
+      register: nginx_config_check
+
+    - name: Reload Nginx to apply configuration changes
+      service:
+        name: nginx
+        state: reloaded
+      when: nginx_config_check.rc == 0
+
     - name: Set MySQL root password for installation
       ansible.builtin.shell: |
         echo "mysql-server mysql-server/root_password password {{ mysql_root_password }}" | debconf-set-selections
