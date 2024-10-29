@@ -19,6 +19,30 @@
       apt:
         update_cache: yes
 
+    - name: Install dependencies for adding PPAs
+      apt:
+        name: software-properties-common
+        state: present
+
+    - name: Add PHP PPA
+      apt_repository:
+        repo: ppa:ondrej/php
+        state: present
+        update_cache: yes
+
+    - name: Install PHP 8.1 and related modules
+      apt:
+        name:
+          - php8.1
+          - php8.1-cli
+          - php8.1-mysql
+          - php8.1-xml
+          - php8.1-mbstring
+          - php8.1-curl
+          - php8.1-zip
+          - php8.1-fpm
+        state: present
+
     - name: Install necessary packages
       apt:
         name: "{{ item }}"
@@ -29,14 +53,6 @@
         - debconf-utils
         - python3-pip
         - python3-mysqldb
-        - php="{{ php_version }}"
-        - php-cli
-        - php-mbstring
-        - php-xml
-        - php-mysql
-        - php-fpm
-        - php-curl
-        - php-zip
         - nodejs
         - curl
 
