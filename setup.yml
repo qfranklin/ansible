@@ -38,32 +38,23 @@
         - nodejs
         - curl
 
+    - name: Find the PHP-FPM socket path dynamically
+      shell: "find /var/run/php -name 'php*-fpm.sock' | head -n 1"
+      register: php_fpm_socket_path
+      changed_when: false
+
     - name: Start and enable Nginx
       service:
         name: nginx
         state: started
         enabled: yes
+
     - name: Configure Nginx to listen on port {{ nginx_port }}
-      copy:
+      template:
+        src: nginx.conf.j2
         dest: /etc/nginx/sites-available/default
-        content: |
-          server {
-              listen {{ nginx_port }} default_server;
-              listen [::]:{{ nginx_port }} default_server;
-              server_name localhost;
-              root /var/www/laravel/public;
-              index index.php index.html index.htm;
-              location / {
-                  try_files $uri $uri/ /index.php?$query_string;
-              }
-              location ~ \.php$ {
-                  include snippets/fastcgi-php.conf;
-                  fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
-              }
-              location ~ /\.ht {
-                  deny all;
-              }
-          }
+      vars:
+        php_fpm_socket: "{{ php_fpm_socket_path.stdout }}"
 
     - name: Check Nginx configuration syntax
       command: nginx -t
