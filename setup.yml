@@ -1,5 +1,4 @@
----
-- name: Setup environment
+- name: Setup development environment
   hosts: localhost
   become: yes
 
@@ -11,6 +10,9 @@
     laravel_directory: /var/www/laravel
     vue_directory: /var/www/vue
     ansible_python_interpreter: /usr/bin/python3
+    php_version: "8.1"
+    node_version: "16.x"
+    mysql_version: "5.7"
 
   tasks:
     - name: Update apt package index
@@ -27,7 +29,7 @@
         - debconf-utils
         - python3-pip
         - python3-mysqldb
-        - php
+        - php="{{ php_version }}"
         - php-cli
         - php-mbstring
         - php-xml
@@ -37,6 +39,21 @@
         - php-zip
         - nodejs
         - curl
+
+    - name: Install Node.js version manager (nvm)
+      shell: |
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+      args:
+        executable: /bin/bash
+
+    - name: Install specific version of Node.js
+      shell: |
+        source ~/.nvm/nvm.sh
+        nvm install {{ node_version }}
+      args:
+        executable: /bin/bash
+      environment:
+        NVM_DIR: /home/{{ ansible_user }}/.nvm
 
     - name: Find the PHP-FPM socket path dynamically
       shell: "find /var/run/php -name 'php*-fpm.sock' | head -n 1"
@@ -74,7 +91,7 @@
 
     - name: Install MySQL server
       ansible.builtin.apt:
-        name: mysql-server
+        name: "mysql-server={{ mysql_version }}"
         state: present
 
     - name: Run mysql_secure_installation equivalent
@@ -175,6 +192,19 @@
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
       become: yes
       become_user: qfranklin
+
+    - name: Ensure the www-data group exists
+      ansible.builtin.group:
+        name: www-data
+        state: present
+
+    - name: Ensure the www-data user exists
+      ansible.builtin.user:
+        name: www-data
+        group: www-data
+        shell: /usr/sbin/nologin
+        state: present
+        system: yes
 
     - name: Set ownership for Laravel directories
       file:
