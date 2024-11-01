@@ -18,6 +18,18 @@
       apt:
         update_cache: yes
 
+    - name: Check if vars.yml exists
+      stat:
+        path: vars.yml
+      register: vars_file
+    
+    - name: Copy vars.yml.example to vars.yml if vars.yml does not exist
+      copy:
+        src: vars.yml.example
+        dest: vars.yml
+        remote_src: yes
+      when: not vars_file.stat.exists
+
     - name: Install dependencies for adding PPAs
       apt:
         name: software-properties-common
@@ -53,6 +65,7 @@
         - python3-pip
         - python3-mysqldb
         - nodejs
+        - npm
         - curl
 
     - name: Install Node.js version manager (nvm)
@@ -152,6 +165,14 @@
         login_user: root
         login_password: "{{ mysql_root_password }}"
 
+    - name: Delete /var/www/laravel and /var/www/vue directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/www/laravel
+        - /var/www/vue
+
     - name: Install Composer
       get_url:
         url: https://getcomposer.org/installer
@@ -165,19 +186,15 @@
 
     - name: Clone Laravel repository
       git:
-        repo: 'git@github.com:qfranklin/laravel.git'
+        repo: 'https://github.com/qfranklin/laravel.git'
         dest: "{{ laravel_directory }}"
         version: main
-      become: yes
-      become_user: qfranklin
 
     - name: Clone Vue repository
       git:
-        repo: 'git@github.com:qfranklin/vue.git'
+        repo: 'https://github.com/qfranklin/vue.git'
         dest: "{{ vue_directory }}"
         version: main
-      become: yes
-      become_user: qfranklin
 
     - name: Install Laravel dependencies with Composer
       command: composer install
@@ -186,8 +203,6 @@
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
         COMPOSER_ALLOW_SUPERUSER: "1"
-      become: yes
-      become_user: qfranklin
 
     - name: Install NPM dependencies for Vue
       command: npm install
@@ -195,8 +210,6 @@
         chdir: "{{ vue_directory }}"
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-      become: yes
-      become_user: qfranklin
 
     - name: Configure Laravel .env
       template:
@@ -218,8 +231,6 @@
         chdir: "{{ laravel_directory }}"
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-      become: yes
-      become_user: qfranklin
 
     - name: Compile Vue assets
       command: npm run build
@@ -227,8 +238,6 @@
         chdir: "{{ vue_directory }}"
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-      become: yes
-      become_user: qfranklin
 
     - name: Ensure the www-data group exists
       ansible.builtin.group:
