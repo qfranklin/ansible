@@ -232,13 +232,6 @@
       environment:
         PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 
-    - name: Compile Vue assets
-      command: npm run build
-      args:
-        chdir: "{{ vue_directory }}"
-      environment:
-        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-
     - name: Ensure the www-data group exists
       ansible.builtin.group:
         name: www-data
@@ -267,6 +260,42 @@
       loop:
         - /var/www/laravel/storage
         - /var/www/laravel/bootstrap/cache
+
+    - name: Set ownership for Vue directory
+      file:
+        path: "{{ vue_directory }}"
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Set permissions for Vue directory
+      file:
+        path: "{{ vue_directory }}"
+        mode: '755'
+        recurse: yes
+
+    # Build the Vue application for production
+    - name: Build Vue application for production
+      command: npm run build
+      args:
+        chdir: "{{ vue_directory }}"
+      environment:
+        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+    # Configure Nginx to serve the Vue application
+    - name: Configure Nginx for Vue application
+      ansible.builtin.blockinfile:
+        path: /etc/nginx/sites-available/default
+        block: |
+          server {
+              listen 8080;
+              server_name yourdomain.com;
+
+              location / {
+                  root {{ vue_directory }}/dist;
+                  try_files $uri $uri/ /index.html;
+              }
+          }
 
   handlers:
     - name: Generate Laravel app key
