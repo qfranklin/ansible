@@ -15,13 +15,13 @@
 
   tasks:
     - include_tasks: tasks/general_install.yml
+    - include_tasks: tasks/nginx.yml
 
     - name: Install necessary packages
       apt:
         name: "{{ item }}"
         state: present
       loop:
-        - nginx
         - debconf-utils
         - python3-mysqldb
         - nodejs
@@ -41,57 +41,6 @@
         executable: /bin/bash
       environment:
         NVM_DIR: "/home/{{ ansible_facts['user'] | default('ubuntu') }}/.nvm"
-
-    - name: Find the PHP-FPM socket path dynamically
-      shell: "find /var/run/php -name 'php*-fpm.sock' | head -n 1"
-      register: php_fpm_socket_path
-      changed_when: false
-
-    - name: Configure Nginx to use PHP 8.1 and listen on port {{ nginx_port }}
-      ansible.builtin.blockinfile:
-        path: /etc/nginx/sites-available/default
-        create: yes
-        block: |
-          server {
-              listen {{ nginx_port }};
-              server_name quentinfranklin.com;
-
-              root /var/www/laravel/public;
-              index index.php index.html index.htm;
-
-              location / {
-                  try_files $uri $uri/ /index.php?$query_string;
-              }
-
-              location ~ \.php$ {
-                  include snippets/fastcgi-php.conf;
-                  fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-                  fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                  include fastcgi_params;
-              }
-
-              location ~ /\.ht {
-                  deny all;
-              }
-          }
-
-    - name: Check Nginx configuration syntax
-      command: nginx -t
-      ignore_errors: yes
-      register: nginx_config_check
-
-    - name: Start and enable Nginx
-      service:
-        name: nginx
-        state: started
-        enabled: yes
-      when: nginx_config_check.rc == 0
-
-    - name: Reload Nginx to apply configuration changes
-      service:
-        name: nginx
-        state: reloaded
-      when: nginx_config_check.rc == 0
 
     - name: Set MySQL root password for installation
       ansible.builtin.shell: |
