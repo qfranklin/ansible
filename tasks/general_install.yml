@@ -1,0 +1,48 @@
+- name: Check if vars.yml exists
+  stat:
+    path: vars.yml
+  register: vars_file
+
+- name: Copy vars.yml.example to vars.yml if vars.yml does not exist
+  copy:
+    src: vars.yml.example
+    dest: vars.yml
+    remote_src: yes
+  when: not vars_file.stat.exists
+
+- name: Update apt package index
+  apt:
+    update_cache: yes
+
+- name: Install dependencies for adding PPAs
+  apt:
+    name: software-properties-common
+    state: present
+
+- name: Add PHP PPA
+  apt_repository:
+    repo: ppa:ondrej/php
+    state: present
+    update_cache: yes
+
+- name: Install PHP 8.1 and related modules
+  apt:
+    name:
+      - php8.1
+      - php8.1-cli
+      - php8.1-mysql
+      - php8.1-xml
+      - php8.1-mbstring
+      - php8.1-curl
+      - php8.1-zip
+      - php8.1-fpm
+    state: present
+
+- name: Install general packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - git
+    - python3-pip
+    - curl
