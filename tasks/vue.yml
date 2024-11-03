@@ -9,9 +9,46 @@
     dest: "{{ vue_directory }}"
     version: main
 
+- name: Set ownership for Vue directory
+  file:
+    path: "{{ vue_directory }}"
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: Set permissions for Vue directory
+  file:
+    path: "{{ vue_directory }}"
+    mode: '755'
+    recurse: yes
+
 - name: Install NPM dependencies for Vue
   command: npm install
   args:
     chdir: "{{ vue_directory }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+
+- name: Build Vue application for production
+  become: yes
+  become_user: www-data
+  command: npm run build
+  args:
+    chdir: "{{ vue_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+- name: Configure Nginx for Vue application
+  ansible.builtin.blockinfile:
+    path: /etc/nginx/sites-available/default
+    block: |
+      server {
+          listen 8080;
+          server_name yourdomain.com;
+
+          location / {
+              root {{ vue_directory }}/dist;
+              try_files $uri $uri/ /index.html;
+          }
+      }

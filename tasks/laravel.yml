@@ -20,30 +20,59 @@
     dest: "{{ laravel_directory }}"
     version: main
 
+- name: Ensure www-data user has proper home directory
+  user:
+    name: www-data
+    home: /var/www
+    shell: /bin/bash
+    system: yes
+
+- name: Set ownership for Laravel directories
+  file:
+    path: "{{ laravel_directory }}"
+    owner: www-data
+    group: www-data
+    recurse: yes
+    mode: '0755'
+
 - name: Install Laravel dependencies with Composer
-  command: composer install
+  become: yes
+  become_user: www-data
+  become_method: sudo
+  command: composer install --no-dev --no-interaction
   args:
     chdir: "{{ laravel_directory }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
     COMPOSER_ALLOW_SUPERUSER: "1"
+    HOME: "/var/www"
 
 - name: Configure Laravel .env
   template:
     src: env.j2
     dest: "{{ laravel_directory }}/.env"
     mode: '0644'
+    owner: www-data
+    group: www-data
 
 - name: Generate Laravel app key
+  become: yes
+  become_user: www-data
+  become_method: sudo
   command: php artisan key:generate
   args:
     chdir: "{{ laravel_directory }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    HOME: "/var/www"
 
 - name: Run Laravel migrations
+  become: yes
+  become_user: www-data
+  become_method: sudo
   command: php artisan migrate
   args:
     chdir: "{{ laravel_directory }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    HOME: "/var/www"

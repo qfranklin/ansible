@@ -46,3 +46,21 @@
     - git
     - python3-pip
     - curl
+
+- name: Create www-data group
+  become: yes
+  group:
+    name: www-data
+    state: present
+    system: yes
+
+- name: Create www-data user
+  become: yes
+  user:
+    name: www-data
+    group: www-data
+    shell: /bin/bash 
+    system: yes
+    create_home: yes
+    home: /var/www
+    state: present
