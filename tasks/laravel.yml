@@ -1,65 +1,49 @@
-- name: Install Laravel
-  block:
-    - name: Delete Laravel directory
-      file:
-        path: "{{ laravel_directory }}"
-        state: absent
-      no_log: true
+- name: Delete Laravel directory
+  file:
+    path: "{{ laravel_directory }}"
+    state: absent
 
-    - name: Download Composer installer
-      get_url:
-        url: https://getcomposer.org/installer
-        dest: /tmp/composer-installer.php
-        mode: '0755'
-      no_log: true
+- name: Download Composer installer
+  get_url:
+    url: https://getcomposer.org/installer
+    dest: /tmp/composer-installer.php
+    mode: '0755'
 
-    - name: Run Composer installer
-      command: php /tmp/composer-installer.php --install-dir=/usr/local/bin --filename=composer
-      args:
-        creates: /usr/local/bin/composer
-      no_log: true
+- name: Run Composer installer
+  command: php /tmp/composer-installer.php --install-dir=/usr/local/bin --filename=composer
+  args:
+    creates: /usr/local/bin/composer
 
-    - name: Clone Laravel repository
-      git:
-        repo: 'https://github.com/qfranklin/laravel.git'
-        dest: "{{ laravel_directory }}"
-        version: main
-      no_log: true
+- name: Clone Laravel repository
+  git:
+    repo: 'https://github.com/qfranklin/laravel.git'
+    dest: "{{ laravel_directory }}"
+    version: main
 
-    - name: Install Laravel dependencies with Composer
-      command: composer install
-      args:
-        chdir: "{{ laravel_directory }}"
-      environment:
-        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-        COMPOSER_ALLOW_SUPERUSER: "1"
-      no_log: true
+- name: Install Laravel dependencies with Composer
+  command: composer install
+  args:
+    chdir: "{{ laravel_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    COMPOSER_ALLOW_SUPERUSER: "1"
 
-    - name: Configure Laravel .env
-      template:
-        src: env.j2
-        dest: "{{ laravel_directory }}/.env"
-        mode: '0644'
-      notify: Generate Laravel app key
-      no_log: true
+- name: Configure Laravel .env
+  template:
+    src: env.j2
+    dest: "{{ laravel_directory }}/.env"
+    mode: '0644'
 
-    - name: Generate Laravel app key
-      command: php artisan key:generate
-      args:
-        chdir: "{{ laravel_directory }}"
-      environment:
-        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-      no_log: true
+- name: Generate Laravel app key
+  command: php artisan key:generate
+  args:
+    chdir: "{{ laravel_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
 
-    - name: Run Laravel migrations
-      command: php artisan migrate
-      args:
-        chdir: "{{ laravel_directory }}"
-      environment:
-        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-      no_log: true
-
-  rescue:
-    - name: Fail the playbook if Laravel installation fails
-      fail:
-        msg: "Laravel installation failed. Please check the logs for details."
+- name: Run Laravel migrations
+  command: php artisan migrate
+  args:
+    chdir: "{{ laravel_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"

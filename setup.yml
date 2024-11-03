@@ -104,11 +104,3 @@
                   try_files $uri $uri/ /index.html;
               }
           }
-
-  handlers:
-    - name: Generate Laravel app key
-      command: php artisan key:generate
-      args:
-        chdir: "{{ laravel_directory }}"
-      environment:
-        PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
