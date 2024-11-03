@@ -46,6 +46,7 @@
     - git
     - python3-pip
     - curl
+    - acl
 
 - name: Create www-data group
   become: yes

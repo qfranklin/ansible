@@ -38,7 +38,7 @@
 - name: Install Laravel dependencies with Composer
   become: yes
   become_user: www-data
-  become_method: sudo
+  become_flags: --set-home
   command: composer install --no-dev --no-interaction
   args:
     chdir: "{{ laravel_directory }}"
