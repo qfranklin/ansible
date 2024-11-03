@@ -1,0 +1,17 @@
+- name: Delete Vue directory
+  file:
+    path: "{{ vue_directory }}"
+    state: absent
+
+- name: Clone Vue repository
+  git:
+    repo: 'https://github.com/qfranklin/vue.git'
+    dest: "{{ vue_directory }}"
+    version: main
+
+- name: Install NPM dependencies for Vue
+  command: npm install
+  args:
+    chdir: "{{ vue_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
