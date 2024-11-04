@@ -1,0 +1,81 @@
+- name: Delete Vue directory
+  file:
+    path: "{{ vue_directory }}"
+    state: absent
+
+- name: Clone Vue repository
+  git:
+    repo: 'https://github.com/qfranklin/vue.git'
+    dest: "{{ vue_directory }}"
+    version: main
+
+- name: Create required directories for www-data
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  loop:
+    - /var/www/.npm
+    - /var/www/.cache
+    - /var/www/.cache/Cypress
+
+- name: Set ownership for Vue directory
+  file:
+    path: "{{ vue_directory }}"
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: Set permissions for Vue directory
+  file:
+    path: "{{ vue_directory }}"
+    mode: '755'
+    recurse: yes
+
+- name: Install NPM dependencies for Vue
+  become: yes
+  become_user: www-data
+  command: npm install
+  args:
+    chdir: "{{ vue_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    HOME: "/var/www"
+
+- name: Build Vue application for production
+  become: yes
+  become_user: www-data
+  command: npm run build
+  args:
+    chdir: "{{ vue_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    HOME: "/var/www"
+
+- name: Configure Nginx for Vue application
+  ansible.builtin.blockinfile:
+    path: /etc/nginx/sites-available/default
+    block: |
+      server {
+          listen 8080;
+          server_name localhost;
+
+          location / {
+              root {{ vue_directory }}/dist;
+              try_files $uri $uri/ /index.html;
+          }
+      }
+
+- name: Create symbolic link for Nginx config
+  file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+    force: yes
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted

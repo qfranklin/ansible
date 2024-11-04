@@ -1,0 +1,55 @@
+- name: Update apt package index
+  apt:
+    update_cache: yes
+
+- name: Install dependencies for adding PPAs
+  apt:
+    name: software-properties-common
+    state: present
+
+- name: Add PHP PPA
+  apt_repository:
+    repo: ppa:ondrej/php
+    state: present
+    update_cache: yes
+
+- name: Install PHP 8.1 and related modules
+  apt:
+    name:
+      - php8.1
+      - php8.1-cli
+      - php8.1-mysql
+      - php8.1-xml
+      - php8.1-mbstring
+      - php8.1-curl
+      - php8.1-zip
+      - php8.1-fpm
+    state: present
+
+- name: Install general packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - git
+    - python3-pip
+    - curl
+    - acl
+
+- name: Create www-data group
+  become: yes
+  group:
+    name: www-data
+    state: present
+    system: yes
+
+- name: Create www-data user
+  become: yes
+  user:
+    name: www-data
+    group: www-data
+    shell: /bin/bash 
+    system: yes
+    create_home: yes
+    home: /var/www
+    state: present

@@ -1,0 +1,39 @@
+
+- name: Install MySQL packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - debconf-utils
+    - python3-mysqldb
+
+- name: Set MySQL root password for installation
+  ansible.builtin.shell: |
+    echo "mysql-server mysql-server/root_password password {{ mysql_root_password }}" | debconf-set-selections
+    echo "mysql-server mysql-server/root_password_again password {{ mysql_root_password }}" | debconf-set-selections
+
+- name: Install MySQL server
+  ansible.builtin.apt:
+    name: mysql-server
+    state: present
+
+- name: Run mysql_secure_installation equivalent
+  ansible.builtin.command: |
+    mysql -u root -p'{{ mysql_root_password }}' -e "DELETE FROM mysql.user WHERE User=''; FLUSH PRIVILEGES;"
+
+- name: Create MySQL database
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create MySQL user with privileges
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: "localhost"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
