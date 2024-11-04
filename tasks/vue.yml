@@ -60,10 +60,22 @@
     block: |
       server {
           listen 8080;
-          server_name yourdomain.com;
+          server_name localhost;
 
           location / {
               root {{ vue_directory }}/dist;
               try_files $uri $uri/ /index.html;
           }
       }
+
+- name: Create symbolic link for Nginx config
+  file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+    force: yes
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted

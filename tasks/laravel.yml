@@ -38,13 +38,11 @@
 - name: Install Laravel dependencies with Composer
   become: yes
   become_user: www-data
-  become_flags: --set-home
   command: composer install --no-dev --no-interaction
   args:
     chdir: "{{ laravel_directory }}"
   environment:
     PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-    COMPOSER_ALLOW_SUPERUSER: "1"
     HOME: "/var/www"
 
 - name: Configure Laravel .env
