@@ -28,8 +28,14 @@
 
 # Development
     ```bash
+  sudo usermod -a -G www-data qfranklin
   ansible-playbook setup.yml -i inventory/dev.yml --ask-become-pass
   ```
+
+  ```powershell
+  wsl --shutdown
+  ```
+
 # Production  
   ```bash
   ansible-playbook setup.yml -i inventory/prod.yml --ask-become-pass

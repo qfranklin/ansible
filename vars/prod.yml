@@ -1,5 +1,9 @@
 env: prod
+nginx_port_var: 80
 db_name: laravel_db
 db_user: laravel_user
 db_password: secure_password
 mysql_root_password: root_password
+file_mode: "755"
+server_name: "quentinfranklin.com"
+npm_command: "npm run build"

@@ -14,10 +14,9 @@
     create: yes
     block: |
       server {
-          listen {{ nginx_port }};
-          server_name quentinfranklin.com;
-
-          root /var/www/laravel/public;
+          listen {{ nginx_port_var }};
+          server_name {{ server_name }};
+          root {{ laravel_directory }}/public;
           index index.php index.html index.htm;
 
           location / {

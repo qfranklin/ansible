@@ -2,8 +2,10 @@ env: dev
 nginx_port_var: 8082
 git_email: "qfranklin906@gmail.com"
 git_name: "Quentin Franklin"
-
 db_name: laravel_db
 db_user: laravel_user
 db_password: secure_password
 mysql_root_password: root_password
+file_mode: "775"
+server_name: "localhost"
+npm_command: "npm run dev"

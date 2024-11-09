@@ -52,4 +52,3 @@
     system: yes
     create_home: yes
     home: /var/www
-    state: present
