@@ -85,19 +85,6 @@
   async: 300 
   poll: 0
 
-- name: Configure Nginx for Vue application
-  ansible.builtin.blockinfile:
-    path: /etc/nginx/sites-available/default
-    block: |
-      server {
-          listen {{ nginx_port_var }};
-          server_name {{ server_name }};
-          location / {
-              root {{ vue_directory }}/dist;
-              try_files $uri $uri/ /index.html;
-          }
-      }
-
 - name: Create symbolic link for Nginx config
   file:
     src: /etc/nginx/sites-available/default
