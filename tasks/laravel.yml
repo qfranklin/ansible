@@ -30,13 +30,6 @@
     repo: "{{ laravel_directory }}"
   when: inventory_file | basename | splitext | first == "dev"
 
-- name: Ensure www-data user has proper home directory
-  user:
-    name: www-data
-    home: /var/www
-    shell: /bin/bash
-    system: yes
-
 - name: Set ownership for Laravel directories
   file:
     path: "{{ laravel_directory }}"
