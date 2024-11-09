@@ -52,10 +52,3 @@
     system: yes
     create_home: yes
     home: /var/www
-    state: present
-
-- name: Copy vars.yml.example to vars.yml
-  copy:
-    src: vars.yml.example
-    dest: vars.yml
-    mode: '0644'

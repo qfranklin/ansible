@@ -18,12 +18,25 @@
   ```powershell
   wsl --install -d Ubuntu
   ```
-# Ubuntu helpful commands
+# Run all of these commands on Ubuntu before executing ansible
   ```bash
   sudo apt update
   sudo apt install -y software-properties-common
   sudo add-apt-repository --yes --update ppa:ansible/ansible
   sudo apt install -y ansible
-  ansible-playbook setup.yml -i localhost --ask-become-pass
-  sudo usermod -a -G www-data $USER
+  ```
+
+# Development
+    ```bash
+  sudo usermod -a -G www-data qfranklin
+  ansible-playbook setup.yml -i inventory/dev.yml --ask-become-pass
+  ```
+
+  ```powershell
+  wsl --shutdown
+  ```
+
+# Production  
+  ```bash
+  ansible-playbook setup.yml -i inventory/prod.yml --ask-become-pass
   ```

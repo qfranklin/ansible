@@ -1,3 +1,16 @@
+- name: Check for running Vite processes
+  shell: |
+    ps aux | grep "[v]ite"
+  register: vite_check
+  changed_when: false
+  ignore_errors: yes
+
+- name: Stop Vite processes if running
+  shell: |
+    pkill -f "node.*vite"
+  when: vite_check.stdout != ""
+  ignore_errors: yes
+
 - name: Delete Vue directory
   file:
     path: "{{ vue_directory }}"
@@ -31,7 +44,7 @@
 - name: Set permissions for Vue directory
   file:
     path: "{{ vue_directory }}"
-    mode: '755'
+    mode: "{{ file_mode }}"
     recurse: yes
 
 - name: Install NPM dependencies for Vue
@@ -47,27 +60,28 @@
     HOME: /var/www
     NVM_DIR: /var/www/.nvm
 
-- name: Build Vue application for production
+- name: Build Vue application
   become: yes
   become_user: www-data
   shell: |
     source /var/www/.nvm/nvm.sh
-    npm run build
+    nohup {{ npm_command }} > /var/www/vue/npm.log 2>&1 &
   args:
     executable: /bin/bash
     chdir: "{{ vue_directory }}"
   environment:
     HOME: /var/www
     NVM_DIR: /var/www/.nvm
+  async: 300 
+  poll: 0
 
 - name: Configure Nginx for Vue application
   ansible.builtin.blockinfile:
     path: /etc/nginx/sites-available/default
     block: |
       server {
-          listen 8080;
-          server_name localhost;
-
+          listen {{ nginx_port_var }};
+          server_name {{ server_name }};
           location / {
               root {{ vue_directory }}/dist;
               try_files $uri $uri/ /index.html;

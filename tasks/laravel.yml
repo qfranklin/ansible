@@ -33,7 +33,7 @@
     owner: www-data
     group: www-data
     recurse: yes
-    mode: '0755'
+    mode: "{{ file_mode }}"
 
 - name: Install Laravel dependencies with Composer
   become: yes
