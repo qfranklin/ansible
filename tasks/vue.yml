@@ -37,22 +37,28 @@
 - name: Install NPM dependencies for Vue
   become: yes
   become_user: www-data
-  command: npm install
+  shell: |
+    source /var/www/.nvm/nvm.sh
+    npm install
   args:
+    executable: /bin/bash
     chdir: "{{ vue_directory }}"
   environment:
-    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-    HOME: "/var/www"
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
 
 - name: Build Vue application for production
   become: yes
   become_user: www-data
-  command: npm run build
+  shell: |
+    source /var/www/.nvm/nvm.sh
+    npm run build
   args:
+    executable: /bin/bash
     chdir: "{{ vue_directory }}"
   environment:
-    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
-    HOME: "/var/www"
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
 
 - name: Configure Nginx for Vue application
   ansible.builtin.blockinfile:

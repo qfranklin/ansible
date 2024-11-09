@@ -15,6 +15,7 @@
 
   tasks:
     - include_tasks: tasks/general_install.yml
+    - include_tasks: tasks/nodejs.yml
     - include_tasks: tasks/nginx.yml
     - include_tasks: tasks/mysql.yml
     - include_tasks: tasks/laravel.yml
