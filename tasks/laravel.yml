@@ -20,6 +20,16 @@
     dest: "{{ laravel_directory }}"
     version: main
 
+- name: Configure Git to ignore file mode changes
+  become: yes
+  become_user: "{{ ansible_user_id }}"
+  git_config:
+    name: core.fileMode
+    scope: local
+    value: 'false'
+    repo: "{{ laravel_directory }}"
+  when: inventory_file | basename | splitext | first == "dev"
+
 - name: Ensure www-data user has proper home directory
   user:
     name: www-data
