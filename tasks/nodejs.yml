@@ -1,14 +1,23 @@
 - name: Install Node.js version manager (nvm)
+  become: yes
+  become_user: www-data
   shell: |
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
   args:
     executable: /bin/bash
+  environment:
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
 
 - name: Install specific version of Node.js
+  become: yes
+  become_user: www-data
   shell: |
-    source ~/.nvm/nvm.sh
+    source /var/www/.nvm/nvm.sh
     nvm install {{ node_version }}
+    nvm alias default {{ node_version }}
   args:
     executable: /bin/bash
   environment:
-    NVM_DIR: "/home/{{ ansible_facts['user'] | default('ubuntu') }}/.nvm"
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
