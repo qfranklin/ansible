@@ -29,6 +29,7 @@
 # Development
     ```bash
   sudo usermod -a -G www-data qfranklin
+  git config core.fileMode false
   ansible-playbook setup.yml -i inventory/dev.yml --ask-become-pass
   ```
 
