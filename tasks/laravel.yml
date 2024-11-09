@@ -20,13 +20,6 @@
     dest: "{{ laravel_directory }}"
     version: main
 
-- name: Ensure www-data user has proper home directory
-  user:
-    name: www-data
-    home: /var/www
-    shell: /bin/bash
-    system: yes
-
 - name: Set ownership for Laravel directories
   file:
     path: "{{ laravel_directory }}"
