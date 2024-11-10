@@ -3,6 +3,11 @@
     name: nginx
     state: present
 
+- name: Stop Nginx service
+  service:
+    name: nginx
+    state: stopped
+
 - name: Find the PHP-FPM socket path dynamically
   shell: "find /var/run/php -name 'php*-fpm.sock' | head -n 1"
   register: php_fpm_socket_path

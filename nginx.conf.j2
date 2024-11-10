@@ -1,24 +1,24 @@
-# nginx.conf.j2
 # Frontend - Vue.js
 server {
     listen 8080 default_server;
     listen [::]:8080 default_server;
     server_name {{ server_name }};
     
-    # Development with Vite
+    # Development mode - proxy to Vite dev server (assumes Vite is running on 5173)
     location / {
-        proxy_pass http://localhost:5173;
+        {% if env == "dev" %}
+        proxy_pass http://127.0.0.1:5173;  # Changed from localhost to 127.0.0.1
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
-    }
-
-    # Production build
-    location /dist {
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+        {% else %}
         alias {{ vue_directory }}/dist;
         try_files $uri $uri/ /index.html;
+        {% endif %}
     }
 }
 
@@ -31,12 +31,32 @@ server {
     root {{ laravel_directory }}/public;
     index index.php;
 
-    # CORS headers
-    add_header 'Access-Control-Allow-Origin' 'http://localhost:8080' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
-    add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
-    
+    # CORS Headers
+    set $cors_origin '';
+    if ($http_origin = 'http://localhost:8080') {
+        set $cors_origin 'http://localhost:8080';
+    }
+    if ($http_origin = 'http://localhost:5173') {
+        set $cors_origin 'http://localhost:5173';
+    }
+
     location / {
+        # Handle OPTIONS preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+            add_header 'Access-Control-Max-Age' 3600 always;
+            return 204;
+        }
+
+        # Apply CORS headers for all other requests
+        if ($cors_origin != '') {
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+        }
+
         try_files $uri $uri/ /index.php?$query_string;
     }
 
