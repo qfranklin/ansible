@@ -1,20 +1,51 @@
+# nginx.conf.j2
+# Frontend - Vue.js
 server {
-    listen {{ nginx_port }} default_server;
-    listen [::]:{{ nginx_port }} default_server;
-    server_name localhost;
-    root /var/www/laravel/public;
-    index index.php index.html index.htm;
+    listen 8080 default_server;
+    listen [::]:8080 default_server;
+    server_name {{ server_name }};
+    
+    # Development with Vite
+    location / {
+        proxy_pass http://localhost:5173;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
 
+    # Production build
+    location /dist {
+        alias {{ vue_directory }}/dist;
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# Backend - Laravel API
+server {
+    listen {{ nginx_port_var }} default_server;
+    listen [::]:{{ nginx_port_var }} default_server;
+    server_name {{ server_name }};
+    
+    root {{ laravel_directory }}/public;
+    index index.php;
+
+    # CORS headers
+    add_header 'Access-Control-Allow-Origin' 'http://localhost:8080' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+    add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+    
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
     location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:{{ php_fpm_socket }};
-    }
-
-    location ~ /\.ht {
-        deny all;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
     }
 }
