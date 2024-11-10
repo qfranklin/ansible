@@ -84,15 +84,3 @@
     NVM_DIR: /var/www/.nvm
   async: 300 
   poll: 0
-
-- name: Create symbolic link for Nginx config
-  file:
-    src: /etc/nginx/sites-available/default
-    dest: /etc/nginx/sites-enabled/default
-    state: link
-    force: yes
-
-- name: Restart Nginx
-  service:
-    name: nginx
-    state: restarted

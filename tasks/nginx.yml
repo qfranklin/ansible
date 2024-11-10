@@ -8,32 +8,72 @@
   register: php_fpm_socket_path
   changed_when: false
 
-- name: Configure Nginx to use PHP 8.1 and listen on port {{ nginx_port }}
+- name: Configure Nginx for Vue and Laravel
   ansible.builtin.blockinfile:
     path: /etc/nginx/sites-available/default
     create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
     block: |
+      # Frontend - Vue.js
+      server {
+          listen 8080;
+          server_name {{ server_name }};
+          
+          # Development with Vite
+          location / {
+              proxy_pass http://localhost:5173;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_cache_bypass $http_upgrade;
+          }
+
+          # Production build
+          location /dist {
+              alias {{ vue_directory }}/dist;
+              try_files $uri $uri/ /index.html;
+          }
+      }
+
+      # Backend - Laravel API
       server {
           listen {{ nginx_port_var }};
           server_name {{ server_name }};
+          
           root {{ laravel_directory }}/public;
-          index index.php index.html index.htm;
+          index index.php;
 
+          # CORS headers
+          add_header 'Access-Control-Allow-Origin' 'http://localhost:8080' always;
+          add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+          add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+          
           location / {
               try_files $uri $uri/ /index.php?$query_string;
           }
 
           location ~ \.php$ {
-              include snippets/fastcgi-php.conf;
+              fastcgi_split_path_info ^(.+\.php)(/.+)$;
               fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              fastcgi_index index.php;
               include fastcgi_params;
-          }
-
-          location ~ /\.ht {
-              deny all;
+              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              fastcgi_param PATH_INFO $fastcgi_path_info;
           }
       }
+
+- name: Remove default symbolic link
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Create symbolic link for Nginx config
+  file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+    force: yes
 
 - name: Check Nginx configuration syntax
   command: nginx -t
