@@ -11,7 +11,7 @@
     vue_directory: /var/www/vue
     ansible_python_interpreter: /usr/bin/python3
     php_version: "8.1"
-    node_version: "16"
+    node_version: "18"
 
   pre_tasks:
     - name: Setup development tools
@@ -31,7 +31,7 @@
   tasks:
     - include_tasks: tasks/general_install.yml
     - include_tasks: tasks/nodejs.yml
-    - include_tasks: tasks/nginx.yml
     - include_tasks: tasks/mysql.yml
     - include_tasks: tasks/laravel.yml
     - include_tasks: tasks/vue.yml
+    - include_tasks: tasks/nginx.yml
