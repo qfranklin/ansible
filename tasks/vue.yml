@@ -82,5 +82,6 @@
   environment:
     HOME: /var/www
     NVM_DIR: /var/www/.nvm
+    VITE_PORT: 5173
   async: 300 
   poll: 0
