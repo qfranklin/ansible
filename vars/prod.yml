@@ -1,5 +1,5 @@
 env: prod
-nginx_port_var: 80
+nginx_port_var: 8082
 db_name: laravel_db
 db_user: laravel_user
 db_password: secure_password
