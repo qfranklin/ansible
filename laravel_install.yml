@@ -1,0 +1,5 @@
+- name: Laravel Install Playbook
+  hosts: all
+  become: yes
+  tasks:
+    - include_tasks: tasks/laravel.yml
