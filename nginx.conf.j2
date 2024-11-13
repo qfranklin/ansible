@@ -1,9 +1,8 @@
 # Frontend - Vue.js
 server {
-    listen 8080;
+    listen 80;
     server_name {{ server_name }};
     
-    # Development mode - proxy to Vite dev server
     {% if env == "dev" %}
     location / {
         proxy_pass http://127.0.0.1:5173;
@@ -13,8 +12,11 @@ server {
         proxy_set_header Host $host;
     }
     {% else %}
+
+    root /var/www/vue/dist;
+    index index.html;
+
     location / {
-        root {{ vue_directory }}/dist;
         try_files $uri $uri/ /index.html;
     }
     {% endif %}

@@ -89,4 +89,6 @@ Production:
 sudo -u www-data -s
 ps aux | grep node
 npm run build
+
+ps aux | grep "[n]ode.*vite"
 ```
