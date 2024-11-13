@@ -1,0 +1,17 @@
+- name: General Install Playbook
+  hosts: all
+  become: yes
+  
+  vars_files:
+    - "vars/{{ inventory_file | basename | splitext | first }}.yml"
+
+  vars:
+    nginx_port: "{{ nginx_port_var }}"
+    laravel_directory: /var/www/laravel
+    vue_directory: /var/www/vue
+    ansible_python_interpreter: /usr/bin/python3
+    php_version: "8.1"
+    node_version: "18"
+
+  tasks:
+    - include_tasks: tasks/general_install.yml

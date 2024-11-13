@@ -84,3 +84,9 @@ Production:
 - Optimized builds
 - Service configuration
 ```
+
+```bash
+sudo -u www-data -s
+ps aux | grep node
+npm run build
+```
