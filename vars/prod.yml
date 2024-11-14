@@ -2,8 +2,9 @@ env: prod
 nginx_port_var: 8082
 db_name: laravel_db
 db_user: laravel_user
-db_password: secure_password
-mysql_root_password: root_password
 file_mode: "755"
 server_name: "qfranklin.xyz www.qfranklin.xyz"
 npm_command: "npm run build"
+
+vars_files:
+  - vars/vault.yml
