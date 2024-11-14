@@ -1,0 +1,8 @@
+- name: Deploy Frontend and Backend
+  hosts: all
+  become: yes
+  vars_files:
+    - "vars/prod.yml"
+  tasks:
+    - include_tasks: tasks/deploy_frontend.yml
+    - include_tasks: tasks/deploy_backend.yml

@@ -1,0 +1,31 @@
+- name: Pull latest code for frontend
+  git:
+    repo: 'https://github.com/qfranklin/vue.git'
+    dest: "{{ vue_directory }}"
+    version: main
+
+- name: Install NPM dependencies for Vue
+  become: yes
+  become_user: www-data
+  shell: |
+    source /var/www/.nvm/nvm.sh
+    npm install
+  args:
+    executable: /bin/bash
+    chdir: "{{ vue_directory }}"
+  environment:
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
+
+- name: Build Vue application
+  become: yes
+  become_user: www-data
+  shell: |
+    source /var/www/.nvm/nvm.sh
+    npm run build
+  args:
+    executable: /bin/bash
+    chdir: "{{ vue_directory }}"
+  environment:
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm

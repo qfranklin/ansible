@@ -1,0 +1,26 @@
+- name: Pull latest code for backend
+  git:
+    repo: 'https://github.com/qfranklin/laravel.git'
+    dest: "{{ laravel_directory }}"
+    version: main
+
+- name: Install Laravel dependencies with Composer
+  become: yes
+  become_user: www-data
+  command: composer install --no-dev --no-interaction
+  args:
+    chdir: "{{ laravel_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    HOME: "/var/www"
+
+- name: Run Laravel migrations
+  become: yes
+  become_user: www-data
+  become_method: sudo
+  command: php artisan migrate
+  args:
+    chdir: "{{ laravel_directory }}"
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    HOME: "/var/www"
