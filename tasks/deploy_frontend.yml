@@ -1,0 +1,54 @@
+- name: Ensure correct ownership and permissions for Vue directories before deployment
+  become: yes
+  shell: |
+    find {{ vue_directory }} -type d -exec chmod 755 {} \;
+    chown -R www-data:www-data {{ vue_directory }}
+
+- name: Pull latest code for frontend
+  become: yes
+  become_user: www-data
+  git:
+    repo: 'https://github.com/qfranklin/vue.git'
+    dest: "{{ vue_directory }}"
+    version: main
+
+- name: Ensure correct ownership and permissions for Vue directories after pulling code
+  become: yes
+  shell: |
+    find {{ vue_directory }} -type d -exec chmod 755 {} \;
+    find {{ vue_directory }} -type f -exec chmod 644 {} \;
+    chown -R www-data:www-data {{ vue_directory }}
+    chmod -R 755 {{ vue_directory }}/node_modules
+
+- name: Install NPM dependencies for Vue
+  become: yes
+  become_user: www-data
+  shell: |
+    source /var/www/.nvm/nvm.sh
+    npm install
+  args:
+    executable: /bin/bash
+    chdir: "{{ vue_directory }}"
+  environment:
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
+
+- name: Build Vue application
+  become: yes
+  become_user: www-data
+  shell: |
+    source /var/www/.nvm/nvm.sh
+    npm run build
+  args:
+    executable: /bin/bash
+    chdir: "{{ vue_directory }}"
+  environment:
+    HOME: /var/www
+    NVM_DIR: /var/www/.nvm
+
+- name: Ensure correct file permissions and ownership for Vue directory after build
+  become: yes
+  shell: |
+    find {{ vue_directory }} -type f -exec chmod 644 {} \;
+    find {{ vue_directory }} -type d -exec chmod 755 {} \;
+    chown -R www-data:www-data {{ vue_directory }}
