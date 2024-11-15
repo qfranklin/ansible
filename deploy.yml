@@ -3,6 +3,9 @@
   become: yes
   vars_files:
     - "vars/prod.yml"
+  vars:
+    laravel_directory: /var/www/laravel
+    vue_directory: /var/www/vue
   tasks:
     - include_tasks: tasks/deploy_frontend.yml
     - include_tasks: tasks/deploy_backend.yml
