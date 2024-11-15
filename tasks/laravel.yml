@@ -20,6 +20,10 @@
     dest: "{{ laravel_directory }}"
     version: main
 
+- name: Add /var/www/laravel as a safe directory for Git
+  become: yes
+  shell: git config --global --add safe.directory /var/www/laravel
+
 - name: Configure Git to ignore file mode changes
   become: yes
   become_user: "{{ ansible_user_id }}"

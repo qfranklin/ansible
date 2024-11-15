@@ -1,7 +1,3 @@
-- name: Add /var/www/laravel as a safe directory for Git
-  become: yes
-  shell: git config --global --add safe.directory /var/www/laravel
-
 - name: Pull latest code for backend
   git:
     repo: 'https://github.com/qfranklin/laravel.git'
