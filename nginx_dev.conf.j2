@@ -1,9 +1,8 @@
 # Frontend - Vue.js
 server {
-    listen 80;
+    listen 8080;
     server_name {{ server_name }};
     
-    {% if env == "dev" %}
     location / {
         proxy_pass http://127.0.0.1:5173;
         proxy_http_version 1.1;
@@ -11,15 +10,6 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
     }
-    {% else %}
-
-    root /var/www/vue/dist;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-    {% endif %}
 
     # Proxy API requests to Laravel backend
     location /api/ {
