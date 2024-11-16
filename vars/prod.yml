@@ -5,8 +5,6 @@ db_user: laravel_user
 file_mode: "755"
 server_name: "qfranklin.xyz www.qfranklin.xyz"
 npm_command: "npm run build"
-db_password: d2M9r,5.BQHsDWZak@~w7-
-mysql_root_password: g2sHNb5Ej"#w!Zv>T3^pRC
 
 vars_files:
   - vars/vault.yml
