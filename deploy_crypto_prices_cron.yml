@@ -1,0 +1,15 @@
+- name: Deploy Crypto Prices Cron Job
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Set timezone to EST
+      command: timedatectl set-timezone America/New_York
+
+    - name: Create cron job for fetch:crypto-prices
+      cron:
+        name: "Fetch Crypto Prices"
+        minute: "0"
+        hour: "3"
+        job: "/usr/bin/php /var/www/laravel/artisan fetch:crypto-prices"
+        user: www-data
