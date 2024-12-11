@@ -1,0 +1,49 @@
+- name: Backup and replace local database
+  hosts: all
+  become: yes
+  vars_files:
+    - "vars/vault.yml"
+    - "vars/prod.yml"
+
+  tasks:
+    - name: Set MySQL password variable
+      set_fact:
+        mysql_password: "{{ mysql_root_password | replace(\"'\", \"'\\\\''\") }}"
+
+    - name: Dump the remote database
+      shell: "mysqldump --skip-tz-utc -u root -p'{{ mysql_password }}' laravel_db > /tmp/laravel_db.sql"
+      args:
+        creates: /tmp/laravel_db.sql
+
+    - name: Copy the database dump to the local machine
+      fetch:
+        src: /tmp/laravel_db.sql
+        dest: /tmp/laravel_db.sql
+        flat: yes
+
+    - name: Delete the remote database dump
+      file:
+        path: /tmp/laravel_db.sql
+        state: absent
+
+    - name: Drop the local database
+      mysql_db:
+        name: laravel_db
+        state: absent
+        login_user: root
+        login_password: "root_password"
+      delegate_to: localhost
+
+    - name: Create the local database
+      mysql_db:
+        name: laravel_db
+        state: present
+        login_user: root
+        login_password: "root_password"
+      delegate_to: localhost
+
+    - name: Import the database dump into the local database
+      shell: "mysql -u root -proot_password laravel_db < /tmp/laravel_db.sql"
+      args:
+        removes: /tmp/laravel_db.sql
+      delegate_to: localhost
