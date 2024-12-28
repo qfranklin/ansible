@@ -1,0 +1,27 @@
+- name: Ensure PHP upload_max_filesize is set
+  lineinfile:
+    path: /etc/php/8.1/fpm/php.ini
+    regexp: '^upload_max_filesize'
+    line: 'upload_max_filesize = 10M'
+    state: present
+
+- name: Ensure PHP post_max_size is set
+  lineinfile:
+    path: /etc/php/8.1/fpm/php.ini
+    regexp: '^post_max_size'
+    line: 'post_max_size = 10M'
+    state: present
+
+- name: Ensure PHP upload_max_filesize is set for CLI
+  lineinfile:
+    path: /etc/php/8.1/cli/php.ini
+    regexp: '^upload_max_filesize'
+    line: 'upload_max_filesize = 10M'
+    state: present
+
+- name: Ensure PHP post_max_size is set for CLI
+  lineinfile:
+    path: /etc/php/8.1/cli/php.ini
+    regexp: '^post_max_size'
+    line: 'post_max_size = 10M'
+    state: present

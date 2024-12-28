@@ -47,3 +47,15 @@
       args:
         removes: /tmp/laravel_db.sql
       delegate_to: localhost
+
+    - name: Copy images folder to local Laravel folder
+      synchronize:
+        src: /var/www/laravel/public/storage/images
+        dest: /var/www/laravel/public/storage
+        mode: pull
+
+    - name: Copy Laravel error logs to local machine
+      synchronize:
+        src: /var/www/laravel/storage/logs/laravel.log
+        dest: /var/www/laravel/storage/logs/laravel.log
+        mode: pull

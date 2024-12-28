@@ -25,6 +25,15 @@ server {
             return 204;
         }
     }
+
+    # Serve static files from Laravel storage
+    location /storage/ {
+        alias {{ laravel_directory }}/storage/app/public/;
+        access_log off;
+        expires max;
+    }
+
+    client_max_body_size 10M;
 }
 
 # Backend - Laravel API
@@ -46,4 +55,13 @@ server {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
+
+    # Serve static files from Laravel storage
+    location /storage/ {
+        alias {{ laravel_directory }}/storage/app/public/;
+        access_log off;
+        expires max;
+    }
+
+    client_max_body_size 10M;
 }
