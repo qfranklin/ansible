@@ -32,6 +32,8 @@ server {
         access_log off;
         expires max;
     }
+
+    client_max_body_size 10M;
 }
 
 # Backend - Laravel API
@@ -60,4 +62,6 @@ server {
         access_log off;
         expires max;
     }
+
+    client_max_body_size 10M;
 }
