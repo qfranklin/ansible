@@ -1,0 +1,77 @@
+- name: Deploy Security Fixes
+  hosts: all
+  become: yes
+  vars_files:
+    - "vars/prod.yml"
+  tasks:
+    - name: Block access to sensitive files
+      lineinfile:
+        path: /etc/nginx/sites-available/default
+        insertafter: '^server {'
+        line: |
+          location ~ /\.(?!well-known).* {
+              deny all;
+          }
+
+    - name: Limit allowed HTTP methods
+      lineinfile:
+        path: /etc/nginx/sites-available/default
+        insertafter: '^server {'
+        line: |
+          location / {
+              limit_except GET POST {
+                  deny all;
+              }
+          }
+
+    - name: Add security headers
+      lineinfile:
+        path: /etc/nginx/sites-available/default
+        insertafter: '^server {'
+        line: |
+          add_header X-Content-Type-Options nosniff;
+          add_header X-Frame-Options "SAMEORIGIN";
+          add_header X-XSS-Protection "1; mode=block";
+          add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+          add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'";
+
+    - name: Install Fail2Ban
+      apt:
+        name: fail2ban
+        state: present
+        update_cache: yes
+
+    - name: Configure Fail2Ban for Nginx
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [nginx-http-auth]
+          enabled = true
+          port    = http,https
+          filter  = nginx-http-auth
+          logpath = /var/log/nginx/error.log
+          maxretry = 3
+
+          [nginx-botsearch]
+          enabled  = true
+          port     = http,https
+          filter   = nginx-botsearch
+          logpath  = /var/log/nginx/access.log
+          maxretry = 2
+
+          [nginx-noscript]
+          enabled  = true
+          port     = http,https
+          filter   = nginx-noscript
+          logpath  = /var/log/nginx/error.log
+          maxretry = 6
+
+    - name: Restart Fail2Ban service
+      service:
+        name: fail2ban
+        state: restarted
+
+    - name: Restart Nginx service
+      service:
+        name: nginx
+        state: restarted
