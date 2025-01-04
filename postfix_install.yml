@@ -1,0 +1,129 @@
+- name: Deploy SMTP Server
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Install Postfix
+      apt:
+        name: postfix
+        state: present
+        update_cache: yes
+
+    - name: Configure Postfix hostname
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?myhostname ='
+        line: 'myhostname = {{ ansible_fqdn }}'
+      notify: Restart Postfix
+
+    - name: Configure Postfix to listen on all interfaces
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?inet_interfaces ='
+        line: 'inet_interfaces = all'
+      notify: Restart Postfix
+
+    - name: Configure Postfix to use TLS
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?smtpd_tls_cert_file ='
+        line: 'smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem'
+      notify: Restart Postfix
+
+    - name: Configure Postfix to use TLS key
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?smtpd_tls_key_file ='
+        line: 'smtpd_tls_key_file = /etc/ssl/private/ssl-cert-snakeoil.key'
+      notify: Restart Postfix
+
+    - name: Enable Postfix TLS
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?smtpd_use_tls ='
+        line: 'smtpd_use_tls = yes'
+      notify: Restart Postfix
+
+    - name: Set Postfix myorigin
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?myorigin ='
+        line: 'myorigin = /etc/mailname'
+      notify: Restart Postfix
+
+    - name: Set Postfix relayhost
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?relayhost ='
+        line: 'relayhost ='
+      notify: Restart Postfix
+
+    - name: Set Postfix mydestination
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?mydestination ='
+        line: 'mydestination = localhost'
+      notify: Restart Postfix
+
+    - name: Set Postfix mynetworks
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?mynetworks ='
+        line: 'mynetworks = 127.0.0.0/8 [::1]/128'
+      notify: Restart Postfix
+
+    - name: Set Postfix mailbox size limit
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?mailbox_size_limit ='
+        line: 'mailbox_size_limit = 0'
+      notify: Restart Postfix
+
+    - name: Set Postfix recipient delimiter
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?recipient_delimiter ='
+        line: 'recipient_delimiter = +'
+      notify: Restart Postfix
+
+    - name: Set Postfix inet_protocols
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?inet_protocols ='
+        line: 'inet_protocols = all'
+      notify: Restart Postfix
+
+    - name: Set Postfix sender canonical maps
+      lineinfile:
+        path: /etc/postfix/main.cf
+        regexp: '^#?sender_canonical_maps ='
+        line: 'sender_canonical_maps = regexp:/etc/postfix/canonical'
+      notify: Restart Postfix
+
+    - name: Create canonical file
+      copy:
+        dest: /etc/postfix/canonical
+        content: |
+          /^.*$/ no-reply@qfranklin.xyz
+      notify: Restart Postfix
+
+    - name: Update Laravel .env file with SMTP configuration
+      lineinfile:
+        path: /var/www/laravel/.env
+        regexp: '^MAIL_'
+        line: "{{ item }}"
+      with_items:
+        - 'MAIL_MAILER=smtp'
+        - 'MAIL_HOST=localhost'
+        - 'MAIL_PORT=25'
+        - 'MAIL_USERNAME=null'
+        - 'MAIL_PASSWORD=null'
+        - 'MAIL_ENCRYPTION=null'
+        - 'MAIL_FROM_ADDRESS=no-reply@qfranklin.xyz'
+        - 'MAIL_FROM_NAME="${APP_NAME}"'
+      notify: Restart PHP-FPM
+
+    - name: Restart PHP-FPM service
+      service:
+        name: php8.1-fpm
+        state: restarted
