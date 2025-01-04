@@ -123,7 +123,13 @@
         - 'MAIL_FROM_NAME="${APP_NAME}"'
       notify: Restart PHP-FPM
 
-    - name: Restart PHP-FPM service
+  handlers:
+    - name: Restart Postfix
+      service:
+        name: postfix
+        state: restarted
+
+    - name: Restart PHP-FPM
       service:
         name: php8.1-fpm
         state: restarted
